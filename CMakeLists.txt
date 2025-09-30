@@ -26,6 +26,11 @@ endif()
 
 option(NB_CREATE_INSTALL_RULES "Create installation rules" ${NB_MASTER_PROJECT})
 option(NB_USE_SUBMODULE_DEPS   "Use the nanobind dependencies shipped as a git submodule of this repository" ON)
+option(NB_USE_FETCHCONTENT_DEPS   "Use the nanobind dependencies shipped using FetchContent" OFF)
+
+if( NB_USE_SUBMODULE_DEPS AND NB_USE_FETCHCONTENT_DEPS)
+  message(FATAL_ERROR "NB_USE_SUBMODULE_DEPS and NB_USE_FETCHCONTENT_DEPS cannot both be enabled")
+endif()
 
 option(NB_TEST               "Compile nanobind tests?" ${NB_MASTER_PROJECT})
 option(NB_TEST_STABLE_ABI    "Test the stable ABI interface?" OFF)
@@ -48,16 +53,6 @@ if (NB_MASTER_PROJECT AND NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
     "MinSizeRel" "RelWithDebInfo")
-endif()
-
-# ---------------------------------------------------------------------------
-# Check whether all dependencies are present
-# ---------------------------------------------------------------------------
-
-if (NB_USE_SUBMODULE_DEPS AND NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/ext/robin_map/include")
-  message(FATAL_ERROR "The nanobind dependencies are missing! "
-    "You probably did not clone the project with --recursive. It is possible to recover "
-    "by invoking\n$ git submodule update --init --recursive")
 endif()
 
 # ---------------------------------------------------------------------------

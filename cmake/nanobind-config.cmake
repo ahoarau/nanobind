@@ -241,20 +241,32 @@ function (nanobind_build_library TARGET_NAME)
   target_compile_definitions(${TARGET_NAME} PRIVATE
     $<${NB_OPT_SIZE}:NB_COMPACT_ASSERTIONS>)
 
-  # If nanobind was installed without submodule dependencies, then the
-  # dependencies directory won't exist and we need to find them.
-  # However, if the directory _does_ exist, then the user is free to choose
-  # whether nanobind uses them (based on `NB_USE_SUBMODULE_DEPS`), with a
-  # preference to choose them if `NB_USE_SUBMODULE_DEPS` is not defined
-  if (NOT IS_DIRECTORY ${NB_DIR}/ext/robin_map/include OR
-      (DEFINED NB_USE_SUBMODULE_DEPS AND NOT NB_USE_SUBMODULE_DEPS))
-    include(CMakeFindDependencyMacro)
-    find_dependency(tsl-robin-map)
-    target_link_libraries(${TARGET_NAME} PRIVATE tsl::robin_map)
-  else()
-    target_include_directories(${TARGET_NAME} PRIVATE
-      ${NB_DIR}/ext/robin_map/include)
+  # Option1: Use fetchcontent to fetch the tsl::robin_map dependency
+  if (DEFINED NB_USE_FETCHCONTENT_DEPS AND NB_USE_FETCHCONTENT_DEPS)
+      include(FetchContent)
+      FetchContent_Declare(
+        robin_map
+        URL https://github.com/Tessil/robin-map/archive/refs/tags/v1.4.0.zip
+        URL_HASH MD5=ddb6a6f3ad41d8c1f8882b42d8aa87ea
+      )
+      FetchContent_MakeAvailable(robin_map)
   endif()
+
+  # Option 2: Use the submodule version of tsl::robin_map
+  if(DEFINED NB_USE_SUBMODULE_DEPS AND NB_USE_SUBMODULE_DEPS)
+    if(NOT IS_DIRECTORY "${NB_DIR}/ext/robin_map/include")
+      message(FATAL_ERROR "The nanobind dependencies are missing! "
+        "You probably did not clone the project with --recursive. It is possible to recover "
+        "by invoking\n$ git submodule update --init --recursive")
+    endif()
+
+    add_library(tsl::robin_map INTERFACE IMPORTED)
+    set_target_properties(tsl::robin_map PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${NB_DIR}/ext/robin_map/include")
+  endif()
+
+  target_link_libraries(${TARGET_NAME} PRIVATE tsl::robin_map)
+
 
   target_include_directories(${TARGET_NAME} ${AS_SYSINCLUDE} PUBLIC
     ${Python_INCLUDE_DIRS}
