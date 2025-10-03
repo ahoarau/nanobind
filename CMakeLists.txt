@@ -55,9 +55,15 @@ endif()
 # ---------------------------------------------------------------------------
 
 if (NB_USE_SUBMODULE_DEPS AND NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/ext/robin_map/include")
-  message(FATAL_ERROR "The nanobind dependencies are missing! "
-    "You probably did not clone the project with --recursive. It is possible to recover "
-    "by invoking\n$ git submodule update --init --recursive")
+  # Check if tsl-robin-map can be found externally before failing
+  # This allows using FetchContent with tarballs where submodules aren't available
+  find_package(tsl-robin-map QUIET)
+  if (NOT TARGET tsl::robin_map)
+    message(FATAL_ERROR "The nanobind dependencies are missing! "
+      "You probably did not clone the project with --recursive. It is possible to recover "
+      "by invoking\n$ git submodule update --init --recursive\n"
+      "Alternatively, install tsl-robin-map separately or set NB_USE_SUBMODULE_DEPS=OFF")
+  endif()
 endif()
 
 # ---------------------------------------------------------------------------
