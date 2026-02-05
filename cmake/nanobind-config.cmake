@@ -508,6 +508,8 @@ function(nanobind_sanitizer_preload_env env_var)
       endforeach()
     endforeach()
 
+    list(REMOVE_DUPLICATES san_flags)
+
     # Parse sanitizer flags
     foreach(flag ${san_flags})
       string(REPLACE "\"" "" flag "${flag}")
@@ -525,7 +527,6 @@ function(nanobind_sanitizer_preload_env env_var)
   endforeach()
 
   if (detected_san)
-    list(REMOVE_DUPLICATES detected_san)
     set(libs "")
 
     foreach(san ${detected_san})
